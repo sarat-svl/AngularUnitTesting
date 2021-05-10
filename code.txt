@@ -1,0 +1,422 @@
+strength.pipe.spec.ts
+
+import { StrengthPipe } from './strength.pipe';
+
+describe('StrengthPipe', () => {
+    it('should display weak if strength is 5', () => {
+        const pipe = new StrengthPipe();
+
+        expect(pipe.transform(5)).toEqual('5 (weak)');
+    });
+
+    it('should display strong if strength is 10', () => {
+        const pipe = new StrengthPipe();
+
+        expect(pipe.transform(10)).toEqual('10 (strong)');
+    });
+});
+
+
+***************************************************************
+
+message.service.spec.ts
+
+import { MessageService } from './message.service';
+
+describe('MessageService', () => {
+    let service: MessageService;
+
+    beforeEach(() => {
+        service = new MessageService();
+    });
+
+    it('should have no messages to start', () => {
+        // service = new MessageService();
+
+        expect(service.messages.length).toBe(0);
+    });
+
+    it('should add a message when add is called', () => {
+        // service = new MessageService();
+
+        service.add('message1');
+
+        expect(service.messages.length).toBe(1);
+    });
+
+    it('should remove all messages when clear is called', () => {
+        // service = new MessageService();
+        service.add('message1');
+
+        service.clear();
+
+        expect(service.messages.length).toBe(0);
+    });
+});
+
+
+
+***************************************************************
+
+heroes.component.spec.ts
+
+import { of } from 'rxjs';
+import { HeroesComponent } from './heroes.component';
+
+describe('HeroesComponent', () => {
+    let component: HeroesComponent;
+    let HEROES;
+    let mockHeroService;
+
+    beforeEach(() => {
+        HEROES = [
+            { id: 11, name: 'Mr. Nice', strength: 10 },
+            { id: 12, name: 'Narco', strength: 5 },
+            { id: 13, name: 'Bombasto', strength: 8 },
+        ];
+
+        mockHeroService = jasmine.createSpyObj(['getHeroes', 'addHero', 'deleteHero']);
+
+        component = new HeroesComponent(mockHeroService);
+    });
+
+    describe('delete', () => {
+        it('should remove the indicated hero from heroes list', () => {
+            mockHeroService.deleteHero.and.returnValue(of(true));
+            component.heroes = HEROES;
+
+            component.delete(HEROES[2]);
+
+            expect(component.heroes.length).toBe(2);
+        });
+
+        it('should call deleteHero', () => {
+            mockHeroService.deleteHero.and.returnValue(of(true));
+            component.heroes = HEROES;
+
+            component.delete(HEROES[2]);
+
+            // expect(mockHeroService.deleteHero).toHaveBeenCalled();
+            expect(mockHeroService.deleteHero).toHaveBeenCalledWith(HEROES[2]);
+        });
+    });
+
+});
+
+
+
+*************************************************************************
+
+hero.component.shallow.spec.ts
+
+import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { ComponentFixture, TestBed } from "@angular/core/testing"
+import { By } from "@angular/platform-browser";
+import { HeroComponent } from "./hero.component"
+
+describe('HeroComponent (shallow tests)', () => {
+    let fixture: ComponentFixture<HeroComponent>;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            declarations: [HeroComponent],
+            schemas: [NO_ERRORS_SCHEMA]
+        });
+        fixture = TestBed.createComponent(HeroComponent);
+    });
+
+    it('should have the correct hero', () => {
+        fixture.componentInstance.hero = {id : 1, name: 'flash', strength: 7};
+
+        expect(fixture.componentInstance.hero.name).toEqual('flash');
+    });
+
+    it('should render the hero name in an anchor tag', () => {
+        fixture.componentInstance.hero = {id : 1, name: 'flash', strength: 7};
+        fixture.detectChanges();
+
+        const deA = fixture.debugElement.query(By.css('a'));
+        expect(deA.nativeElement.textContent).toContain('flash');
+
+        expect(fixture.nativeElement.querySelector('a').textContent).toContain('flash');
+    });
+});
+
+
+
+*****************************************************************************************
+
+heroes.component.shallow.spec.ts
+
+import { Component, Input, NO_ERRORS_SCHEMA } from "@angular/core";
+import { ComponentFixture, TestBed } from "@angular/core/testing"
+import { By } from "@angular/platform-browser";
+import { of } from "rxjs";
+import { Hero } from "../hero";
+import { HeroService } from "../hero.service";
+import { HeroesComponent } from "./heroes.component"
+
+describe('HeroesComponent (shallow test)', () => {
+    let fixture: ComponentFixture<HeroesComponent>;
+    let mockHeroService;
+    let HEROES;
+
+    @Component({
+        selector: 'app-hero',
+        template: '<div></div>',
+      })
+    class FakeHeroComponent {
+        @Input() hero: Hero;
+        // @Output() delete = new EventEmitter();
+    }
+
+    beforeEach(() => {
+        HEROES = [
+            { id: 11, name: 'Mr. Nice', strength: 10 },
+            { id: 12, name: 'Narco', strength: 5 },
+            { id: 13, name: 'Bombasto', strength: 8 },
+        ];
+        mockHeroService = jasmine.createSpyObj(['getHeroes', 'addHero', 'deleteHero']);
+
+        TestBed.configureTestingModule({
+            declarations: [
+                HeroesComponent,
+                FakeHeroComponent
+            ],
+            providers: [
+                { provide: HeroService, useValue: mockHeroService}
+            ],
+            // schemas: [NO_ERRORS_SCHEMA]
+        });
+        fixture = TestBed.createComponent(HeroesComponent);
+    });
+
+    it('should set heroes correctly from the service', () => {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES));
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.heroes.length).toBe(3);
+    });
+
+    it('should  create one li for each hero', () => {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES));
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('li')).length).toBe(3);
+    });
+
+});
+
+
+************************************************************************
+
+heroes.component.deep.spec.ts
+
+import { Component, Input, NO_ERRORS_SCHEMA } from "@angular/core";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
+import { of } from "rxjs";
+import { Hero } from "../hero";
+import { HeroService } from "../hero.service";
+import { HeroComponent } from "../hero/hero.component";
+import { HeroesComponent } from "./heroes.component";
+
+describe('HeroesComponent (Deep test)', () => {
+    let fixture: ComponentFixture<HeroesComponent>;
+    let mockHeroService;
+    let HEROES;
+
+    beforeEach(() => {
+        HEROES = [
+            { id: 11, name: 'Mr. Nice', strength: 10 },
+            { id: 12, name: 'Narco', strength: 5 },
+            { id: 13, name: 'Bombasto', strength: 8 },
+        ];
+        mockHeroService = jasmine.createSpyObj(['getHeroes', 'addHero', 'deleteHero']);
+
+        TestBed.configureTestingModule({
+            declarations: [
+                HeroesComponent,
+                HeroComponent
+            ],
+            providers: [
+                { provide: HeroService, useValue: mockHeroService}
+            ],
+            schemas: [NO_ERRORS_SCHEMA]
+        });
+        fixture = TestBed.createComponent(HeroesComponent);
+        // mockHeroService.getHeroes.and.returnValue(of(HEROES));
+
+        // fixture.detectChanges();
+    });
+
+    it('should render each hero as a HeroComponent', () => {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES));
+
+        // runs ngOnInit
+        fixture.detectChanges();
+
+        const heroComponentDEs = fixture.debugElement.queryAll(By.directive(HeroComponent));
+        expect(heroComponentDEs.length).toEqual(3);
+
+        for (let i = 0; i < heroComponentDEs.length; i++) {
+            expect(heroComponentDEs[i].componentInstance.hero.name).toEqual(HEROES[i].name);
+        }
+    });
+});
+
+
+*********************************************************************************
+
+hero.service.spec.ts
+
+import { inject, TestBed } from '@angular/core/testing';
+import { HeroService } from './hero.service';
+import { MessageService } from './message.service';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
+
+------------------------------------------------------------
+
+describe('Hero service', () => {
+  let mockMessageService;
+  let httpTestingController: HttpTestingController;
+
+  beforeEach(() => {
+    mockMessageService = jasmine.createSpyObj(['add']);
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        HeroService,
+        { provide: MessageService, useValue: mockMessageService },
+      ],
+    });
+
+    httpTestingController = TestBed.get(HttpTestingController);
+  });
+
+  describe('getHero', () => {
+
+    it('should call get with correct url (using inject)',
+      inject([
+        HeroService,
+        HttpTestingController,
+      ],
+      (
+        service: HeroService,
+        controller: HttpTestingController
+      ) => {
+        service.getHero(4).subscribe();
+      }));
+  });
+
+});
+
+
+--------------------------------------------------------------
+
+describe('Hero service', () => {
+  let mockMessageService;
+  let httpTestingController: HttpTestingController;
+  let service;
+
+  beforeEach(() => {
+    mockMessageService = jasmine.createSpyObj(['add']);
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        HeroService,
+        { provide: MessageService, useValue: mockMessageService },
+      ],
+    });
+
+    httpTestingController = TestBed.get(HttpTestingController);
+    service = TestBed.get(HeroService);
+  });
+
+  describe('getHero', () => {
+
+    it('should call get with correct url', () => {
+
+        service.getHero(4).subscribe();
+        // service.getHero(3).subscribe();
+
+        const req = httpTestingController.expectOne('api/heroes/4');
+        req.flush({id: 4, name: 'Sarat', strength: 100});
+        httpTestingController.verify();
+    });
+
+  });
+
+});
+
+*******************************************************************************************
+
+Testing DOM interactions:
+
+heroes.component.deep.spec.ts
+
+// trigger event on elements by clicking button
+    it(`should call heroesService.deleteHero when hero component's
+        delete button is clicked`, () => {
+            spyOn(fixture.componentInstance, 'delete');
+            mockHeroService.getHeroes.and.returnValue(of(HEROES));
+
+            fixture.detectChanges();
+
+            const heroComponents = fixture.debugElement.queryAll(By.directive(HeroComponent));
+            heroComponents[0].query(By.css('button'))
+                .triggerEventHandler('click', {stopPropagation: () => {}});
+
+            expect(fixture.componentInstance.delete).toHaveBeenCalledWith(HEROES[0]);
+    });
+
+    // emitting events from children
+    it(`should call heroesService.deleteHero when hero component's
+        delete button is clicked`, () => {
+            spyOn(fixture.componentInstance, 'delete');
+            mockHeroService.getHeroes.and.returnValue(of(HEROES));
+
+            fixture.detectChanges();
+
+            const heroComponents = fixture.debugElement.queryAll(By.directive(HeroComponent));
+            (<HeroComponent>heroComponents[0].componentInstance).delete.emit(undefined);
+
+            expect(fixture.componentInstance.delete).toHaveBeenCalledWith(HEROES[0]);
+    });
+
+    // raising events on child directive
+    it(`should call heroesService.deleteHero when hero component's
+        delete button is clicked`, () => {
+            spyOn(fixture.componentInstance, 'delete');
+            mockHeroService.getHeroes.and.returnValue(of(HEROES));
+
+            fixture.detectChanges();
+
+            const heroComponents = fixture.debugElement.queryAll(By.directive(HeroComponent));
+            heroComponents[0].triggerEventHandler('delete', null);
+
+            expect(fixture.componentInstance.delete).toHaveBeenCalledWith(HEROES[0]);
+    });
+
+    // interacting with input boxes
+
+        it('should add a new hero to the hero list when the add button is clicked', () => {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES));
+        fixture.detectChanges();
+        const heroName = 'Kane';
+        mockHeroService.addHero.and.returnValue(of({id: 5, name: heroName, strength: 4}));
+        const inputElement = fixture.debugElement.query(By.css('input')).nativeElement;
+        const addButton = fixture.debugElement.queryAll(By.css('button'))[0];
+
+        inputElement.value = heroName;
+        addButton.triggerEventHandler('click', null);
+        fixture.detectChanges();
+
+        const heroText = fixture.debugElement.query(By.css('ul')).nativeElement.textContent;
+        // console.log(heroText);
+        expect(heroText).toContain(heroName);
+    });
+
